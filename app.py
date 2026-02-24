@@ -31,7 +31,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-PASSWORD = "hajix2026"
+PASSWORD = "1"   # ← ここを「1」に変更しました！
 
 SAFE_FALLBACK_TOPICS = [
     "今日の感謝", "おすすめのカフェ", "朝のルーティン", "面白い本",
