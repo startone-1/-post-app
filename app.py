@@ -11,7 +11,7 @@ st.set_page_config(page_title="X投稿支援アプリ", page_icon="🚀", layout
 
 st.markdown("""
 <style>
-    .stButton>button { width: 100% !important; height: 70px !important; font-size: 20px !important; border-radius: 12px; }
+    .stButton>button { width: 100% !important; height: 70px !important; font-size: 20px !important; border-radius: 12px; margin: 8px 0; }
     .post-box { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; white-space: pre-wrap; }
     @media (max-width: 600px) { .post-box { font-size: 16.5px; padding: 16px; } }
 </style>
@@ -113,19 +113,31 @@ with st.sidebar:
 # トレンド選択
 source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True)
 
-# 新しい話題で作成
-if st.button("🆕 選択したトレンドで3投稿を作成", type="primary", use_container_width=True):
-    with st.spinner("🧠 取得 → 自動選択 → 生成中..."):
-        trends = get_google_trends() if "Google" in source else get_x_trends()
-        if len(trends) >= 3:
-            selected = random.sample(trends, 3)
-            st.session_state.selected_trends = selected
-            new_posts = generate_posts(selected, st.session_state.groq_key)
-            st.session_state.generated_posts.extend(new_posts)
-            st.toast("✅ 新しい話題で3投稿生成完了！", icon="🎉")
-            st.rerun()
+col1, col2 = st.columns(2)
 
-# 生成済み投稿
+with col1:
+    if st.button("🆕 違う話題で新しく3投稿を作成", type="primary", use_container_width=True):
+        with st.spinner("🧠 新しいトレンド取得 → 生成中..."):
+            trends = get_google_trends() if "Google" in source else get_x_trends()
+            if len(trends) >= 3:
+                selected = random.sample(trends, 3)
+                st.session_state.selected_trends = selected
+                new_posts = generate_posts(selected, st.session_state.groq_key)
+                st.session_state.generated_posts.extend(new_posts)
+                st.toast("✅ 新しい話題で3投稿生成完了！", icon="🎉")
+                st.rerun()
+
+with col2:
+    if st.button("🔄 同じ話題でさらに3つ生成", type="primary", use_container_width=True):
+        with st.spinner("🧠 同じ話題でさらに生成中..."):
+            if "selected_trends" in st.session_state and len(st.session_state.selected_trends) == 3:
+                new_posts = generate_posts(st.session_state.selected_trends, st.session_state.groq_key)
+                st.session_state.generated_posts.extend(new_posts)
+                st.toast("✅ 同じ話題でさらに3投稿生成完了！", icon="🎉")
+                st.rerun()
+            else:
+                st.error("まず「違う話題で新しく作成」ボタンを押して話題を選んでね")
+
 if st.session_state.generated_posts:
     st.subheader("✍️ 生成された投稿（新しい順）")
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
@@ -135,24 +147,5 @@ if st.session_state.generated_posts:
             if st.button("📋 コピーする", key=f"copy_{i}", use_container_width=True):
                 st.toast(f"✅ コピーしました！\n\n{post}\n\n**このメッセージを長押し**してコピー → Xに貼ってね🚀", icon="📋")
 
-    # 同じ話題でさらに生成
-    if st.button("🔄 同じ話題でさらに3つ生成", use_container_width=True):
-        with st.spinner("🧠 生成中..."):
-            new_posts = generate_posts(st.session_state.selected_trends, st.session_state.groq_key)
-            st.session_state.generated_posts.extend(new_posts)
-            st.rerun()
-
-    # 違う話題で新しく生成
-    if st.button("🆕 違う話題で新しく3投稿を作る", type="primary", use_container_width=True):
-        with st.spinner("🧠 新しいトレンド取得 → 生成中..."):
-            trends = get_google_trends() if "Google" in source else get_x_trends()
-            if len(trends) >= 3:
-                selected = random.sample(trends, 3)
-                st.session_state.selected_trends = selected
-                new_posts = generate_posts(selected, st.session_state.groq_key)
-                st.session_state.generated_posts.extend(new_posts)
-                st.toast("✅ 違う話題で新しく3投稿生成完了！", icon="🎉")
-                st.rerun()
-
 st.markdown("---")
-st.markdown("**使い方**：①トレンドを選ぶ → ②「作成」ボタンを押す → コピーするボタンをタップしてね✨")
+st.markdown("**使い方**：①トレンドを選ぶ → ②「🆕 違う話題で新しく作成」または「🔄 同じ話題でさらに生成」をタップ → コピーするボタンをタップしてね✨")
