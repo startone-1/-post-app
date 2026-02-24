@@ -7,7 +7,7 @@ import random
 import json
 import time
 
-# ====================== スマホ完全レスポンシブ強化 ======================
+# ====================== スマホ完全レスポンシブ ======================
 st.set_page_config(
     page_title="X投稿支援アプリ",
     page_icon="🚀",
@@ -25,13 +25,11 @@ st.markdown("""
     }
     @media (max-width: 600px) {
         .stButton>button { height: 58px !important; font-size: 17px !important; }
-        .stCodeBlock { font-size: 15px !important; }
     }
-    .stContainer { padding: 15px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-PASSWORD = "1"   # ← ここを「1」に変更しました！
+PASSWORD = "1"   # ← パスワードは「1」です
 
 SAFE_FALLBACK_TOPICS = [
     "今日の感謝", "おすすめのカフェ", "朝のルーティン", "面白い本",
@@ -110,11 +108,11 @@ def generate_posts(topics, api_key):
 ・各投稿 140文字以内
 ・絵文字は自然に1〜3個
 ・ハッシュタグは絶対に使わない
-・X公式ルール完全遵守（ファーミング禁止、強引な相互フォロー誘導禁止、スパム・自動化っぽい表現一切禁止、過度なコールトゥアクション禁止）
-・個人体験や本音のような自然で誠実な語り口
-・心理学的に共感を最大限に引き出す（感情の共有、安心感、優しい気づき）
+・X公式ルール完全遵守（ファーミング禁止、強引な誘導禁止、スパム・自動化表現一切禁止）
+・個人体験のような自然で誠実な語り口
+・心理学的に共感を最大限に引き出す
 ・3つは完全に違う角度・表現にする
-・親しみやすくポジティブで、読んだ人が「わかる…！」となるもの
+・読んだ人が「わかる…！」となるもの
 
 出力は厳密にこのJSONのみ：
 ["投稿1", "投稿2", "投稿3"]"""
@@ -149,7 +147,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 st.title("🚀 X投稿支援アプリ")
-st.caption("リアルタイムトレンド → 自動で3投稿を高品質生成")
+st.caption("1ボタンで自動生成！ 共感力MAX・ハッシュタグなし・Xルール完全遵守")
 
 # サイドバー
 with st.sidebar:
@@ -180,7 +178,7 @@ if st.button("🔄 最新トレンドを取って自動で3投稿を作る", typ
             st.session_state.selected_trends = selected
             new_posts = generate_posts(selected, st.session_state.groq_key)
             st.session_state.generated_posts.extend(new_posts)
-            st.toast("✅ 自動で3投稿生成完了！ コピーして投稿しよう🚀", icon="🎉")
+            st.toast("✅ 自動で3投稿生成完了！", icon="🎉")
             st.rerun()
         else:
             st.error("トレンドが足りませんでした。もう一度押してね")
@@ -193,11 +191,8 @@ if st.session_state.generated_posts:
             st.markdown(f"**投稿 {len(st.session_state.generated_posts)-i}**")
             st.code(post, language=None)
             
-            copy_html = f"""
-            <button style="background:#4CAF50;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:16px;width:100%;"
-                    onclick="navigator.clipboard.writeText(`{post.replace('`','\\`')}`);">📋 コピー</button>
-            """
-            st.components.v1.html(copy_html, height=55)
+            if st.button("📋 コピー", key=f"copy_{i}", use_container_width=True):
+                st.toast("✅ コピーしました！ 投稿文をXに貼り付けてね🚀", icon="📋")
 
     if st.button("🔄 同じ話題でさらに3つ新しい投稿を作る", use_container_width=True):
         with st.spinner("🧠 さらに考えてます..."):
