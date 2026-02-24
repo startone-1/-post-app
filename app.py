@@ -37,7 +37,7 @@ def get_x_trends():
                 if trend and len(trend) > 1 and trend not in trends:
                     trends.append(trend)
                     if len(trends) >= 20: break
-        return trends[:15] if trends else random.sample(SAFE_FALLBACK_TOPICS, 12)
+        return trends[:15] or random.sample(SAFE_FALLBACK_TOPICS, 12)
     except:
         return random.sample(SAFE_FALLBACK_TOPICS, 12)
 
@@ -78,7 +78,7 @@ JSONで出力：["投稿1", "投稿2", "投稿3"]"""
     except:
         return generate_posts(topics, None)
 
-# ログイン画面
+# ログイン
 if not st.session_state.logged_in:
     st.title("🔒 ログイン")
     st.markdown("**X投稿支援アプリ**（はじめさん専用）")
@@ -86,6 +86,7 @@ if not st.session_state.logged_in:
     if st.button("ログイン", type="primary", use_container_width=True):
         if pw == PASSWORD:
             st.session_state.logged_in = True
+            st.success("ようこそ！🚀")
             st.rerun()
         else:
             st.error("パスワードが違います😢")
@@ -102,11 +103,10 @@ with st.sidebar:
         st.success("更新しました！")
     st.divider()
     if st.button("🚪 ログアウト"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
+        for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 
-# 自動生成ボタン
+# 自動生成
 if st.button("🔄 最新トレンドを取って自動で3投稿を作る", type="primary", use_container_width=True):
     with st.spinner("🧠 トレンド取得 → 自動選択 → 生成中..."):
         source = st.selectbox("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"])
@@ -115,10 +115,10 @@ if st.button("🔄 最新トレンドを取って自動で3投稿を作る", typ
             selected = random.sample(trends, 3)
             new_posts = generate_posts(selected, st.session_state.groq_key)
             st.session_state.generated_posts.extend(new_posts)
-            st.toast("✅ 自動で3投稿生成完了！ 長押しでコピーしてね", icon="🎉")
+            st.toast("✅ 自動で3投稿生成完了！", icon="🎉")
             st.rerun()
 
-# 生成済み投稿
+# 生成投稿
 if st.session_state.generated_posts:
     st.subheader("✍️ 生成された投稿（新しい順）")
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
