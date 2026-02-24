@@ -12,8 +12,8 @@ st.set_page_config(page_title="X投稿支援アプリ", page_icon="🚀", layout
 st.markdown("""
 <style>
     .stButton>button { width: 100% !important; height: 70px !important; font-size: 20px !important; border-radius: 12px; }
-    .post-text { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; }
-    @media (max-width: 600px) { .post-text { font-size: 16.5px; padding: 16px; } }
+    .post-box { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; white-space: pre-wrap; }
+    @media (max-width: 600px) { .post-box { font-size: 16.5px; padding: 16px; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,7 +96,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 st.title("🚀 X投稿支援アプリ")
-st.caption("1タップでプロ級投稿生成")
+st.caption("トレンドを選んでから作成！ プロ級投稿")
 
 with st.sidebar:
     st.header("⚙️ 設定")
@@ -109,17 +109,19 @@ with st.sidebar:
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 
+# トレンド取得元選択
 source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True)
 
-if st.button("🔄 最新トレンドを取って自動で3投稿を作る", type="primary", use_container_width=True):
-    with st.spinner("🧠 生成中..."):
+# 自動生成
+if st.button("選択したトレンドで3投稿を作成", type="primary", use_container_width=True):
+    with st.spinner("🧠 取得 → 自動選択 → 生成中..."):
         trends = get_google_trends() if "Google" in source else get_x_trends()
         if len(trends) >= 3:
             selected = random.sample(trends, 3)
             st.session_state.selected_trends = selected
             new_posts = generate_posts(selected, st.session_state.groq_key)
             st.session_state.generated_posts.extend(new_posts)
-            st.toast("✅ 生成完了！", icon="🎉")
+            st.toast("✅ プロ級投稿3つ生成完了！", icon="🎉")
             st.rerun()
 
 if st.session_state.generated_posts:
@@ -127,9 +129,9 @@ if st.session_state.generated_posts:
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
         with st.container(border=True):
             st.markdown(f"**投稿 {len(st.session_state.generated_posts)-i}**")
-            st.markdown(f'<div class="post-text">{post}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="post-box">{post}</div>', unsafe_allow_html=True)
             if st.button("📋 コピーする", key=f"copy_{i}", use_container_width=True):
-                st.toast(f"✅ コピーしました！\n\n{post}\n\nこのメッセージを**長押し**してコピー → Xに貼ってね🚀", icon="📋")
+                st.toast(f"✅ コピーしました！\n\n{post}\n\n**このメッセージを長押し**してコピー → Xに貼ってね🚀", icon="📋")
 
     if st.button("🔄 同じ話題でさらに3つ生成", use_container_width=True):
         with st.spinner("🧠 生成中..."):
@@ -138,4 +140,4 @@ if st.session_state.generated_posts:
             st.rerun()
 
 st.markdown("---")
-st.markdown("**使い方**：上のボタン1つで全部自動！ 「コピーする」ボタンをタップしてコピーしてね✨")
+st.markdown("**使い方**：トレンドを選んでから「作成」ボタン → 「コピーする」ボタンをタップしてね✨")
