@@ -7,7 +7,7 @@ import random
 import json
 import time
 
-# ====================== スマホ完全レスポンシブ ======================
+# ====================== スマホ完全対応 ======================
 st.set_page_config(
     page_title="X投稿支援アプリ",
     page_icon="🚀",
@@ -17,15 +17,8 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .stButton>button {
-        width: 100% !important;
-        height: 65px !important;
-        font-size: 18px !important;
-        margin: 8px 0;
-    }
-    @media (max-width: 600px) {
-        .stButton>button { height: 58px !important; font-size: 17px !important; }
-    }
+    .stButton>button { width: 100% !important; height: 65px !important; font-size: 18px !important; margin: 8px 0; }
+    @media (max-width: 600px) { .stButton>button { height: 58px !important; font-size: 17px !important; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -37,19 +30,14 @@ SAFE_FALLBACK_TOPICS = [
     "おいしいご飯", "未来への一歩", "AIの可能性", "健康Tips"
 ]
 
-# ====================== Session State ======================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "groq_key" not in st.session_state:
-    st.session_state.groq_key = ""
-if "available_trends" not in st.session_state:
-    st.session_state.available_trends = []
-if "selected_trends" not in st.session_state:
-    st.session_state.selected_trends = []
-if "generated_posts" not in st.session_state:
-    st.session_state.generated_posts = []
+# Session State
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "groq_key" not in st.session_state: st.session_state.groq_key = ""
+if "available_trends" not in st.session_state: st.session_state.available_trends = []
+if "selected_trends" not in st.session_state: st.session_state.selected_trends = []
+if "generated_posts" not in st.session_state: st.session_state.generated_posts = []
 
-# ====================== ヘルパー関数 ======================
+# トレンド取得
 def get_google_trends():
     try:
         pytrends = TrendReq(hl='ja-JP', tz=540)
@@ -72,48 +60,44 @@ def get_x_trends():
                 trend = a.get_text(strip=True)
                 if trend and len(trend) > 1 and trend not in trends:
                     trends.append(trend)
-                    if len(trends) >= 20:
-                        break
+                    if len(trends) >= 20: break
         return trends[:15]
     except:
         st.toast("Xトレンド取得失敗 → 安全話題を使います", icon="⚠️")
         return random.sample(SAFE_FALLBACK_TOPICS, 12)
 
+# 投稿生成
 def generate_posts(topics, api_key):
     if not api_key:
         time.sleep(1.0)
         templates = [
-            "最近 {t1} の話で胸がいっぱいになったよ。{t2} しながらふと思ったんだけど、{t3} って本当に大事だよね…",
-            "今日 {t1} を知って、なんだか心が温かくなった。{t2} ってこういう気持ちのことなんだろうなって、{t3} と重ねて考えちゃった",
-            "みんなも {t1} で感じたことある？ 私にとっては {t2} がきっかけで {t3} がすごく大切に思えてきたよ"
+            "最近 {t1} の話で心が動いたよ。{t2} しながらふと思ったんだけど、{t3} って本当に大切だよね…",
+            "今日 {t1} を知って、なんだか優しい気持ちになった。{t2} と {t3} を重ねて考えてみたら、すごく納得したよ",
+            "みんなは {t1} でどんな気持ちになった？ 私は {t2} がきっかけで {t3} が急に大切に思えてきたんだ"
         ]
         posts = []
         for _ in range(3):
             t1, t2, t3 = random.sample(topics, 3)
             post = random.choice(templates).format(t1=t1, t2=t2, t3=t3)
-            if len(post) > 140:
-                post = post[:137] + "…"
+            if len(post) > 140: post = post[:137] + "…"
             posts.append(post)
         return posts
 
     try:
         client = Groq(api_key=api_key)
-        prompt = f"""あなたは心理学の修士号を持ち、統計学を専門に研究し、SNSで何百万インプレッションを達成した投稿のプロです。
+        prompt = f"""あなたは心理学の修士号を持ち、SNS投稿のプロです。
 
-話題「{topics[0]}」「{topics[1]}」「{topics[2]}」を使って、**心に深く響く自然な日本語投稿文をちょうど3つ**作ってください。
+話題「{topics[0]}」「{topics[1]}」「{topics[2]}」を使って、心に響く自然な日本語投稿を3つ作ってください。
 
-【厳守ルール】
-・各投稿 140文字以内
-・絵文字は自然に1〜3個
-・ハッシュタグは絶対に使わない
-・X公式ルール完全遵守（ファーミング禁止、強引な誘導禁止、スパム表現一切禁止）
-・個人体験のような自然で誠実な語り口
-・心理学的に共感を最大限に引き出す
-・3つは完全に違う角度・表現にする
-・読んだ人が「わかる…！」となるもの
+厳守：
+- 140文字以内
+- 絵文字1〜3個
+- ハッシュタグなし
+- Xルール完全遵守（ファーミング・スパム禁止）
+- 共感を重視した誠実な語り口
+- 3つは違う表現
 
-出力は厳密にこのJSONのみ：
-["投稿1", "投稿2", "投稿3"]"""
+JSONで出力：["投稿1", "投稿2", "投稿3"]"""
 
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -130,7 +114,7 @@ def generate_posts(topics, api_key):
         st.toast("Groqエラー → 高品質モックで生成します", icon="⚠️")
     return generate_posts(topics, None)
 
-# ====================== UI ======================
+# UI
 if not st.session_state.logged_in:
     st.title("🔒 ログイン")
     st.markdown("**X投稿支援アプリ**（はじめさん専用）")
@@ -145,9 +129,8 @@ if not st.session_state.logged_in:
     st.stop()
 
 st.title("🚀 X投稿支援アプリ")
-st.caption("1ボタンで自動生成！ 共感力MAX・ハッシュタグなし・Xルール完全遵守")
+st.caption("1ボタンで自動生成！ 共感力MAX・ハッシュタグなし")
 
-# サイドバー
 with st.sidebar:
     st.header("⚙️ 設定")
     key_input = st.text_input("Groq APIキー（任意）", value=st.session_state.groq_key, type="password")
@@ -160,9 +143,9 @@ with st.sidebar:
             del st.session_state[key]
         st.rerun()
 
-# ワンクリック自動生成
+# 自動生成ボタン
 if st.button("🔄 最新トレンドを取って自動で3投稿を作る", type="primary", use_container_width=True):
-    with st.spinner("🧠 トレンド取得 → 自動選択 → 高品質投稿生成中..."):
+    with st.spinner("🧠 トレンド取得 → 自動選択 → 生成中..."):
         source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True, label_visibility="collapsed")
         if "Google" in source:
             trends = get_google_trends()
@@ -170,7 +153,6 @@ if st.button("🔄 最新トレンドを取って自動で3投稿を作る", typ
             trends = get_x_trends()
         
         st.session_state.available_trends = trends
-        
         if len(trends) >= 3:
             selected = random.sample(trends, 3)
             st.session_state.selected_trends = selected
@@ -178,26 +160,22 @@ if st.button("🔄 最新トレンドを取って自動で3投稿を作る", typ
             st.session_state.generated_posts.extend(new_posts)
             st.toast("✅ 自動で3投稿生成完了！", icon="🎉")
             st.rerun()
-        else:
-            st.error("トレンドが足りませんでした。もう一度押してね")
 
-# 生成済み投稿表示
+# 生成済み投稿
 if st.session_state.generated_posts:
     st.subheader("✍️ 生成された投稿（新しい順）")
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
         with st.container(border=True):
             st.markdown(f"**投稿 {len(st.session_state.generated_posts)-i}**")
             st.code(post, language=None)
-            
             if st.button("📋 コピー", key=f"copy_{i}", use_container_width=True):
                 st.toast(f"✅ コピーしました！\n\n{post}\n\nXに貼り付けてね🚀", icon="📋")
 
-    if st.button("🔄 同じ話題でさらに3つ新しい投稿を作る", use_container_width=True):
+    if st.button("🔄 同じ話題でさらに3つ生成", use_container_width=True):
         with st.spinner("🧠 さらに考えてます..."):
             new_posts = generate_posts(st.session_state.selected_trends, st.session_state.groq_key)
             st.session_state.generated_posts.extend(new_posts)
             st.rerun()
 
-# フッター
 st.markdown("---")
 st.markdown("**使い方**：上のボタン1つで全部自動！ 140文字・共感重視・ハッシュタグなし・Xルール完全遵守です✨")
