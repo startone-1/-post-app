@@ -53,27 +53,34 @@ def get_x_trends():
 def generate_posts(topics, api_key):
     try:
         client = Groq(api_key=api_key)
-        prompt = f"""心理学・SNSバズのプロとして、話題「{topics[0]}」「{topics[1]}」「{topics[2]}」で心に響く自然な投稿を3つ作って。
-・140文字以内
-・絵文字1〜3個
-・ハッシュタグなし
-・Xルール完全遵守
-・共感を重視した本音調
-JSONで出力：["投稿1", "投稿2", "投稿3"]"""
+        prompt = f"""あなたは心理学修士・SNSで何百万インプレッションを達成した投稿のプロです。
+話題「{topics[0]}」「{topics[1]}」「{topics[2]}」を使って、**心に深く響く自然で長めの日本語投稿を3つ**作ってください。
+
+厳守ルール：
+- 130〜139文字程度（できるだけ長く自然に）
+- 絵文字は自然に1〜3個
+- **ハッシュタグは絶対に使わない**
+- X公式ルール完全遵守（ファーミング・スパム・強引誘導一切なし）
+- 読んだ人が「わかる…」「そうだよね」と強く共感する本音調
+- プロが丁寧に書いたような上質で優しい文章
+
+出力は厳密にこのJSONのみ：
+["投稿1", "投稿2", "投稿3"]"""
+
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             temperature=1.15,
-            max_tokens=800,
+            max_tokens=900,
             response_format={"type": "json_object"}
         )
         posts = json.loads(response.choices[0].message.content)
-        return [p[:138] + "…" if len(p) > 140 else p for p in posts]
+        return [p[:139] if len(p) > 140 else p for p in posts]
     except:
         templates = [
-            "最近 {t1} の話で心が動いたよ。{t2} しながらふと思ったんだけど、{t3} って本当に大切だよね…",
-            "今日 {t1} を知って、なんだか優しい気持ちになった。{t2} と {t3} を重ねて考えてみたら、すごく納得したよ",
-            "みんなは {t1} でどんな気持ちになった？ 私は {t2} がきっかけで {t3} が急に大切に思えてきたんだ"
+            "最近 {t1} の話で心がとても動いたよ。{t2} をしているときにふと思ったんだけど、{t3} って本当に大切だよね…。自分でも気づかなかった気持ちが溢れてきて、なんだか優しい気持ちになった",
+            "今日 {t1} を知って、胸が温かくなった。{t2} と一緒に考えると {t3} が急に大事に思えてきて、こんなシンプルなことに気づけてよかったなって思ったよ",
+            "みんなは {t1} でどんな気持ちになった？ 私は {t2} がきっかけで {t3} がすごく大切に感じるようになって。日常の中でこんな風に心が動くことって、意外と幸せだよね"
         ]
         posts = []
         for _ in range(3):
@@ -97,7 +104,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 st.title("🚀 X投稿支援アプリ")
-st.caption("トレンドを選んでから作成！")
+st.caption("トレンドを選んでから作成！ 長めで共感力高め")
 
 with st.sidebar:
     st.header("⚙️ 設定")
@@ -113,34 +120,32 @@ with st.sidebar:
 # トレンド選択
 source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True)
 
-col1, col2 = st.columns(2)
+# 違う話題で新しく作成
+if st.button("🆕 違う話題で新しく3投稿を作成", type="primary", use_container_width=True):
+    with st.spinner("🧠 新しいトレンド取得 → 生成中..."):
+        trends = get_google_trends() if "Google" in source else get_x_trends()
+        if len(trends) >= 3:
+            selected = random.sample(trends, 3)
+            st.session_state.selected_trends = selected
+            new_posts = generate_posts(selected, st.session_state.groq_key)
+            st.session_state.generated_posts.extend(new_posts)  # 新しいものが下に追加
+            st.toast("✅ 新しい話題で3投稿生成完了！", icon="🎉")
+            st.rerun()
 
-with col1:
-    if st.button("🆕 違う話題で新しく3投稿を作成", type="primary", use_container_width=True):
-        with st.spinner("🧠 新しいトレンド取得 → 生成中..."):
-            trends = get_google_trends() if "Google" in source else get_x_trends()
-            if len(trends) >= 3:
-                selected = random.sample(trends, 3)
-                st.session_state.selected_trends = selected
-                new_posts = generate_posts(selected, st.session_state.groq_key)
-                st.session_state.generated_posts.extend(new_posts)
-                st.toast("✅ 新しい話題で3投稿生成完了！", icon="🎉")
-                st.rerun()
-
-with col2:
-    if st.button("🔄 同じ話題でさらに3つ生成", type="primary", use_container_width=True):
-        with st.spinner("🧠 同じ話題でさらに生成中..."):
-            if "selected_trends" in st.session_state and len(st.session_state.selected_trends) == 3:
-                new_posts = generate_posts(st.session_state.selected_trends, st.session_state.groq_key)
-                st.session_state.generated_posts.extend(new_posts)
-                st.toast("✅ 同じ話題でさらに3投稿生成完了！", icon="🎉")
-                st.rerun()
-            else:
-                st.error("まず「違う話題で新しく作成」ボタンを押して話題を選んでね")
+# 同じ話題でさらに生成
+if st.button("🔄 同じ話題でさらに3つ生成", type="primary", use_container_width=True):
+    with st.spinner("🧠 同じ話題でさらに生成中..."):
+        if "selected_trends" in st.session_state and len(st.session_state.selected_trends) == 3:
+            new_posts = generate_posts(st.session_state.selected_trends, st.session_state.groq_key)
+            st.session_state.generated_posts.extend(new_posts)  # 新しいものが下に追加
+            st.toast("✅ 同じ話題でさらに3投稿生成完了！", icon="🎉")
+            st.rerun()
+        else:
+            st.error("まず「🆕 違う話題で新しく作成」ボタンを押して話題を選んでね")
 
 if st.session_state.generated_posts:
     st.subheader("✍️ 生成された投稿（新しい順）")
-    for i, post in enumerate(reversed(st.session_state.generated_posts)):
+    for i, post in enumerate(reversed(st.session_state.generated_posts)):  # 表示は新しい順に上から
         with st.container(border=True):
             st.markdown(f"**投稿 {len(st.session_state.generated_posts)-i}**")
             st.markdown(f'<div class="post-box">{post}</div>', unsafe_allow_html=True)
