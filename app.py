@@ -134,4 +134,4 @@ if st.session_state.generated_posts:
             st.rerun()
 
 st.markdown("---")
-st.markdown("**使い方**：上のボタン1つで全部自動！ 140文字・共感重視・ハッシュタグなし・Xルール完全遵守です✨")
+st.markdown("**使い方**：上のボタン1つで全部自動！ 長押しでコピーしてXに貼ってね✨")
