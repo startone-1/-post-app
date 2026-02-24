@@ -9,6 +9,14 @@ import time
 
 st.set_page_config(page_title="X投稿支援アプリ", page_icon="🚀", layout="centered")
 
+st.markdown("""
+<style>
+    .stButton>button { width: 100% !important; height: 70px !important; font-size: 20px !important; border-radius: 12px; }
+    .post-text { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; }
+    @media (max-width: 600px) { .post-text { font-size: 16.5px; padding: 16px; } }
+</style>
+""", unsafe_allow_html=True)
+
 PASSWORD = "1"
 
 SAFE_FALLBACK_TOPICS = ["今日の感謝", "おすすめのカフェ", "朝のルーティン", "面白い本", "散歩の楽しみ", "家族の時間", "新しい挑戦", "笑顔の魔法", "おいしいご飯", "未来への一歩", "AIの可能性", "健康Tips"]
@@ -119,15 +127,15 @@ if st.session_state.generated_posts:
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
         with st.container(border=True):
             st.markdown(f"**投稿 {len(st.session_state.generated_posts)-i}**")
-            st.code(post, language=None)
-            if st.button("📋 タップでコピー", key=f"copy_{i}", use_container_width=True):
+            st.markdown(f'<div class="post-text">{post}</div>', unsafe_allow_html=True)
+            if st.button("📋 コピーする", key=f"copy_{i}", use_container_width=True):
                 st.toast(f"✅ コピーしました！\n\n{post}\n\nこのメッセージを**長押し**してコピー → Xに貼ってね🚀", icon="📋")
 
     if st.button("🔄 同じ話題でさらに3つ生成", use_container_width=True):
-        with st.spinner("🧠 さらに生成中..."):
+        with st.spinner("🧠 生成中..."):
             new_posts = generate_posts(st.session_state.selected_trends, st.session_state.groq_key)
             st.session_state.generated_posts.extend(new_posts)
             st.rerun()
 
 st.markdown("---")
-st.markdown("**使い方**：上のボタン1つで全部自動！ 「タップでコピー」ボタンを押してコピーしてね✨")
+st.markdown("**使い方**：上のボタン1つで全部自動！ 「コピーする」ボタンをタップしてコピーしてね✨")
