@@ -12,7 +12,7 @@ st.set_page_config(page_title="X投稿支援アプリ", page_icon="🚀", layout
 st.markdown("""
 <style>
     .stButton>button { width: 100% !important; height: 70px !important; font-size: 20px !important; border-radius: 12px; }
-    .post-box { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; white-space: pre-wrap; }
+    .post-box { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; white-space: pre-wrap; word-break: break-all; }
     @media (max-width: 600px) { .post-box { font-size: 16.5px; padding: 16px; } }
 </style>
 """, unsafe_allow_html=True)
@@ -96,7 +96,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 st.title("🚀 X投稿支援アプリ")
-st.caption("トレンドを選んでから作成！ プロ級投稿")
+st.caption("トレンドを選んでから作成！")
 
 with st.sidebar:
     st.header("⚙️ 設定")
@@ -109,12 +109,12 @@ with st.sidebar:
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 
-# トレンド取得元選択
+# トレンド選択
 source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True)
 
-# 自動生成
+# 作成ボタン（ここを押すまで何も始まらない）
 if st.button("選択したトレンドで3投稿を作成", type="primary", use_container_width=True):
-    with st.spinner("🧠 取得 → 自動選択 → 生成中..."):
+    with st.spinner("🧠 トレンド取得 → 自動選択 → 生成中..."):
         trends = get_google_trends() if "Google" in source else get_x_trends()
         if len(trends) >= 3:
             selected = random.sample(trends, 3)
@@ -124,6 +124,7 @@ if st.button("選択したトレンドで3投稿を作成", type="primary", use_
             st.toast("✅ プロ級投稿3つ生成完了！", icon="🎉")
             st.rerun()
 
+# 生成された投稿
 if st.session_state.generated_posts:
     st.subheader("✍️ 生成された投稿（新しい順）")
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
@@ -140,4 +141,4 @@ if st.session_state.generated_posts:
             st.rerun()
 
 st.markdown("---")
-st.markdown("**使い方**：トレンドを選んでから「作成」ボタン → 「コピーする」ボタンをタップしてね✨")
+st.markdown("**使い方**：①トレンドを選ぶ → ②「作成」ボタンを押す → ③「コピーする」ボタンをタップしてコピーしてね✨")
