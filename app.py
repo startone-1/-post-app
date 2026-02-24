@@ -11,9 +11,9 @@ st.set_page_config(page_title="X投稿支援アプリ", page_icon="🚀", layout
 
 st.markdown("""
 <style>
-    .stButton>button { width: 100%; height: 62px; font-size: 18px; border-radius: 12px; }
-    .post-area { background: #1e1e2e; padding: 18px; border-radius: 16px; font-size: 17px; line-height: 1.6; }
-    @media (max-width: 600px) { .post-area { font-size: 16px; padding: 15px; } }
+    .stButton>button { width: 100%; height: 65px; font-size: 19px; border-radius: 12px; margin: 8px 0; }
+    .post-box { background: #1e1e2e; padding: 20px; border-radius: 16px; font-size: 17.5px; line-height: 1.65; margin: 12px 0; }
+    @media (max-width: 600px) { .post-box { font-size: 16.5px; padding: 16px; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,16 +52,15 @@ def get_x_trends():
 def generate_posts(topics, api_key):
     try:
         client = Groq(api_key=api_key)
-        prompt = f"""あなたは心理学修士・SNSバズ専門家です。
-話題「{topics[0]}」「{topics[1]}」「{topics[2]}」を使って、心に深く響く自然な日本語投稿を3つ作ってください。
+        prompt = f"""心理学・SNSバズのプロとして、話題「{topics[0]}」「{topics[1]}」「{topics[2]}」で心に深く響く自然な投稿を3つ作ってください。
 
-厳守：
+厳守:
 - 140文字以内
 - 絵文字1〜3個自然に
 - ハッシュタグ完全禁止
-- X公式ルール完全遵守
+- Xルール完全遵守
 - 読んだ人が「わかる…」と共感する本音調
-- プロが書いたような上質さ
+- プロが書いたような上質で優しい文章
 
 JSONで出力：["投稿1", "投稿2", "投稿3"]"""
 
@@ -115,10 +114,8 @@ with st.sidebar:
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 
-# トレンド選択（ラジオボタンに戻した）
-col1, col2 = st.columns([3, 1])
-with col1:
-    source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True)
+# トレンド選択
+source = st.radio("トレンド取得元", ["🟢 Googleトレンド", "🔵 Xトレンド"], horizontal=True)
 
 # 自動生成ボタン
 if st.button("🔄 最新トレンドを取って自動で3投稿を作る", type="primary", use_container_width=True):
@@ -138,7 +135,7 @@ if st.session_state.generated_posts:
     for i, post in enumerate(reversed(st.session_state.generated_posts)):
         with st.container(border=True):
             st.markdown(f"**投稿 {len(st.session_state.generated_posts)-i}**")
-            st.text_area("", value=post, height=130, disabled=True, label_visibility="collapsed")
+            st.markdown(f'<div class="post-box">{post}</div>', unsafe_allow_html=True)
             if st.button("📋 タップでコピー", key=f"copy_{i}", use_container_width=True):
                 st.toast(f"✅ コピーしました！\n\n{post}\n\nXに貼り付けてね🚀", icon="📋")
 
@@ -149,4 +146,4 @@ if st.session_state.generated_posts:
             st.rerun()
 
 st.markdown("---")
-st.markdown("**使い方**：上のボタン1つで全部自動！ 投稿文をタップ → 「タップでコピー」ボタンで簡単コピー✨")
+st.markdown("**使い方**：上のボタン1つで全部自動！ 「タップでコピー」ボタンを押してコピーしてね✨")
